@@ -1,82 +1,122 @@
 <program> => <statement_list>
 
-<statement_list> => <statement> | <statement> <statement_list>
+<statement_list> => <statement> | <statement_list> <statement>
 
 <statement> => <declaration> ";"
               | <assignment> ";"
               | <if_statement>
               | <while_statement>
-              | <function_declaration>
+              | <for_statement>
+              | <function_definition>
               | <function_call> ";"
-              | <io_statement> ";"
               | <return_statement> ";"
-              | <comment>
+              | <print_statement> ";"
+              | <scan_statement> ";"
+              | <try_statement>
+              | <throw_statement> ";"
               | <block>
 
 <block> => "{" <statement_list> "}"
 
-<comment> => "#" <text> <newline>
-
-<declaration> => <var_declaration> | <const_declaration>
-
-<var_declaration> => "var" <type> <identifier> "=" <expression>
-
-<const_declaration> => "const" <type> <identifier> "=" <expression>
-
-<type> => "int" | "float" | "bool" | "string" | "char"
+<declaration> => "var" <identifier> "=" <expression>
+               | "const" <identifier> "=" <expression>
 
 <assignment> => <identifier> "=" <expression>
+              | <array_access> "=" <expression>
 
-<expression> => <term> | <expression> <addop> <term>
+<array_access> => <factor> "[" <expression> "]"
 
-<term> => <factor> | <term> <mulop> <factor>
+<if_statement> => "if" <expression> <block>
+                | "if" <expression> <block> <elif_list>
+                | "if" <expression> <block> <elif_list> "else" <block>
+                | "if" <expression> <block> "else" <block>
 
-<factor> => <identifier>
-           | <literal>
-           | "(" <expression> ")"
-           | <function_call>
-           | <unary_op> <factor>
-
-<addop> => "+" | "-" | "||"
-
-<mulop> => "*" | "/" | "%" | "&&"
-
-<unary_op> => "-" | "!"
-
-<if_statement> => "if" <expression> <block> [<elif_list>] ["else" <block>]
-
-<elif_list> => <elif_clause> | <elif_clause> <elif_list>
+<elif_list> => <elif_clause> | <elif_list> <elif_clause>
 
 <elif_clause> => "elif" <expression> <block>
 
 <while_statement> => "while" <expression> <block>
 
-<function_declaration> => "fn" <identifier> "(" [<param_list>] ")" [":" <type>] <block>
+<for_statement> => "for" "(" <assignment> ";" <expression> ";" <assignment> ")" <block>
 
-<param_list> => <parameter> | <parameter> "," <param_list>
+<print_statement> => "print" "(" <expression> ")"
 
-<parameter> => <type> <identifier>
+<scan_statement> => "scan" "(" <identifier> ")"
 
-<function_call> => <identifier> "(" [<arg_list>] ")"
+<function_definition> => "fn" <identifier> "(" [<parameter_list>] ")" <block>
 
-<arg_list> => <expression> | <expression> "," <arg_list>
+<parameter_list> => <identifier> | <parameter_list> "," <identifier>
 
-<return_statement> => "return" [<expression>]
+<function_call> => <identifier> "(" [<argument_list>] ")"
 
-<io_statement> => "print" "(" <expression> ")"
-                 | "scan" "(" <identifier> ")"
+<argument_list> => <expression> | <argument_list> "," <expression>
 
-<literal> => <integer> | <float> | <boolean> | <string> | <char>
+<return_statement> => "return" <expression>
+
+<try_statement> => "try" <block> <catch_block>
+                 | "try" <block> <catch_block> <finally_block>
+
+<catch_block> => "catch" "(" <identifier> ")" <block>
+
+<finally_block> => "finally" <block>
+
+<throw_statement> => "throw" <expression>
+
+<expression> => <or_expr>
+
+<or_expr> => <and_expr>
+          | <or_expr> "||" <and_expr>
+
+<and_expr> => <not_expr>
+           | <and_expr> "&&" <not_expr>
+
+<not_expr> => <comparison>
+           | "!" <not_expr>
+
+<comparison> => <arithmetic>
+              | <comparison> "<" <arithmetic>
+              | <comparison> "<=" <arithmetic>
+              | <comparison> ">" <arithmetic>
+              | <comparison> ">=" <arithmetic>
+              | <comparison> "==" <arithmetic>
+              | <comparison> "!=" <arithmetic>
+
+<arithmetic> => <term>
+              | <arithmetic> "+" <term>
+              | <arithmetic> "-" <term>
+
+<term> => <factor>
+        | <term> "*" <factor>
+        | <term> "/" <factor>
+        | <term> "%" <factor>
+
+<factor> => <identifier>
+          | <integer>
+          | <float>
+          | <string>
+          | <boolean>
+          | <char>
+          | "(" <expression> ")"
+          | "-" <factor>
+          | <function_call>
+          | <array_literal>
+          | <array_access>
+
+<array_literal> => "[" "]"
+                 | "[" <array_element_list> "]"
+
+<array_element_list> => <expression>
+                      | <array_element_list> "," <expression>
 
 <integer> => <digit>+
 
-<float> => <digit>+ "." <digit>+
-
-<boolean> => "true" | "false"
+<float> => <digit>+.<digit>* | <digit>*.<digit>+
 
 <string> => "\"" <text> "\""
 
 <char> => "'" <character> "'"
+
+<boolean> => "true" | "false"
 
 <identifier> => <letter> (<letter> | <digit> | "_")*
 
@@ -84,10 +124,6 @@
 
 <digit> => [0-9]
 
-<text> => <character>*
+<text> => (<letter> | <digit> | <special_char>)*
 
-<character> => <letter> | <digit> | <symbol>
-
-<symbol> => " " | "!" | "#" | "$"
-
-<newline> => "\n"
+<special_char> => "^" | "&" | "*" | "(" | ")" | "-" | "_" | "=" | "+" | "[" | "]" | "{" | "}" | ";" | ":" | "'" | "," | "." | "<" | ">" | "/" | "?" | "\\" | "|" | " "
