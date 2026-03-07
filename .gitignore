@@ -2,3 +2,5 @@ lex.yy.c
 myprog
 y.tab.c
 y.tab.h
+lex.yy.o
+y.tab.o

@@ -1,128 +1,78 @@
-# assigns integer to age variable
-var int age = 23;
-
-# assigns string to name variable
-var string name = "utku";
-
 # variable declarations
-var int x = 10;
-var float pi = 3.14;
-var bool isActive = true;
-var string message = "Hello, Tzon!";
-var int people = 17;
-var char grade = 'A';
+var age = 23;
+var pi = 3.14;
+var isActive = true;
+var name = "utku";
+var grade = 'A';
+var fileName = "";
 
-# reassign variables
+# constants
+const MAX_SIZE = 100;
+const LANG = "TZON";
+
+# reassignment
 isActive = false;
 name = "melih";
 grade = 'B';
 
 # arithmetic operations
-var int sum = 10 + 20;
-var float division = 9.0 / 3.0;
-var int remainder = 10 % 3;
-var bool logic = true;
-var int complex = (sum * 2) - (remainder + 4);
-var bool rangeOk = (age >= 18) && (age <= 65);
+var sum = 10 + 20;
+var division = 9.0 / 3.0;
+var remainder = 10 % 3;
+var complex = (sum * 2) - (remainder + 4);
 
-# constant declaration
-const int MAX_SIZE = 100;
-const string SHIPMENT_TYPE = "To address";
-const string LANG = "TZON";
+# arrays
+var numbers = [1, 2, 3, 4, 5];
+var first = numbers[0];
+numbers[2] = 99;
 
-# a function to decide whether the people max capacity is reached or not
-fn isFull() : bool {
-    return !(people < MAX_SIZE);
-}
-
-# declares a function that always returns 1
-fn giveOne() : int {
-    return 1;
-}
-
-# print anything
-print("hi there!");
-print("Hello, " + name);
-print("grade: " + grade);
-
-# io statement
-scan(fileName);
-
-# basic while loop
-while age < 18 {
-    print("you are not old enough to get in!");
-    age = age + 1;
-}
-
-# a basic add function with parameters
-fn add(int x, int y) : int {
+# functions
+fn add(x, y) {
     return x + y;
 }
 
-# a basic power function
-fn pow2(int n) : int {
+fn pow2(n) {
     return n * n;
 }
 
-# a basic gender revealing function
-fn getGender(string gender) : char {
-    if gender == "male" {
-        return 'm';
-    }
-    elif gender == "female" {
-        return 'f';
-    }
-    else {
-        return 'u'; # unknown
-    }
-}
-
-# an example recursive function
-fn fibonacci(int s) : int {
-    if s < 2 {
-        return 1;
-    }
-    else {
-        return fibonacci(s - 1) + fibonacci(s - 2);
-    }
-}
-
-# nested control example
-if isActive {
-    if grade == 'A' {
-        print("top grade");
-    } elif grade == 'B' {
-        print("good grade");
-    } else {
-        print("keep studying");
-    }
-}
-
-# conditional statements: if, elif, else
-if x > 10 {
-    print("x is greater than 10");
-} elif x == 10 {
-    print("x is exactly 10");
+# if / elif / else
+if age > 30 {
+    print("age greater than 30");
+} elif age == 30 {
+    print("age is 30");
 } else {
-    print("x is less than 10");
+    print("age less than 30");
 }
 
-# logical expressions
-var int i = 3;
-while i < 6 && i > 2 {
-    i = i + 1;
+# while loop
+while age < 26 {
+    age = age + 1;
 }
-print(i);
 
-if i == 5 || i < 4 {
-    i = i + 1;
+# for loop
+var i = 0;
+for (i = 0; i < 5; i = i + 1) {
     print(i);
 }
 
-# use of functions and expressions
-var int f6 = fibonacci(6);
-var int sq = pow2(7);
-print("fib6: " + f6);
-print("square: " + sq);
+# exceptions
+try {
+    if age > MAX_SIZE {
+        throw "age is too big";
+    }
+} catch (err) {
+    print("caught: " + err);
+} finally {
+    print("finally block");
+}
 
-# the end of the example program to demonstrate all the structs
+# io
+print("enter file name");
+scan(fileName);
+
+# use of functions and expressions
+var f6 = add(5, 7);
+var sq = pow2(7);
+print("sum: " + f6);
+print("square: " + sq);
+# the end of the example program
