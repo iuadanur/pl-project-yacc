@@ -1,0 +1,4 @@
+lex.yy.c
+myprog
+y.tab.c
+y.tab.h

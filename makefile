@@ -1,12 +1,9 @@
-calc: lex.yy.c y.tab.c
-	gcc -g lex.yy.c y.tab.c -o calc
+YACC_BIN := $(firstword $(wildcard /opt/homebrew/opt/bison/bin/bison) $(wildcard /usr/local/opt/bison/bin/bison) yacc)
 
-lex.yy.c: y.tab.c calc.l
-	lex calc.l
+myprog: myprog.y myprog.l
+	$(YACC_BIN) -d -y myprog.y
+	lex myprog.l
+	gcc -o myprog y.tab.c lex.yy.c -ll
 
-y.tab.c: calc.y
-	yacc -d calc.y
-
-clean: 
-	rm -rf lex.yy.c y.tab.c y.tab.h calc calc.dSYM
-
+clean:
+	rm -f myprog y.tab.c y.tab.h lex.yy.c
