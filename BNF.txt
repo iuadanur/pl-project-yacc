@@ -1,0 +1,93 @@
+<program> => <statement_list>
+
+<statement_list> => <statement> | <statement> <statement_list>
+
+<statement> => <declaration> ";"
+              | <assignment> ";"
+              | <if_statement>
+              | <while_statement>
+              | <function_declaration>
+              | <function_call> ";"
+              | <io_statement> ";"
+              | <return_statement> ";"
+              | <comment>
+              | <block>
+
+<block> => "{" <statement_list> "}"
+
+<comment> => "#" <text> <newline>
+
+<declaration> => <var_declaration> | <const_declaration>
+
+<var_declaration> => "var" <type> <identifier> "=" <expression>
+
+<const_declaration> => "const" <type> <identifier> "=" <expression>
+
+<type> => "int" | "float" | "bool" | "string" | "char"
+
+<assignment> => <identifier> "=" <expression>
+
+<expression> => <term> | <expression> <addop> <term>
+
+<term> => <factor> | <term> <mulop> <factor>
+
+<factor> => <identifier>
+           | <literal>
+           | "(" <expression> ")"
+           | <function_call>
+           | <unary_op> <factor>
+
+<addop> => "+" | "-" | "||"
+
+<mulop> => "*" | "/" | "%" | "&&"
+
+<unary_op> => "-" | "!"
+
+<if_statement> => "if" <expression> <block> [<elif_list>] ["else" <block>]
+
+<elif_list> => <elif_clause> | <elif_clause> <elif_list>
+
+<elif_clause> => "elif" <expression> <block>
+
+<while_statement> => "while" <expression> <block>
+
+<function_declaration> => "fn" <identifier> "(" [<param_list>] ")" [":" <type>] <block>
+
+<param_list> => <parameter> | <parameter> "," <param_list>
+
+<parameter> => <type> <identifier>
+
+<function_call> => <identifier> "(" [<arg_list>] ")"
+
+<arg_list> => <expression> | <expression> "," <arg_list>
+
+<return_statement> => "return" [<expression>]
+
+<io_statement> => "print" "(" <expression> ")"
+                 | "scan" "(" <identifier> ")"
+
+<literal> => <integer> | <float> | <boolean> | <string> | <char>
+
+<integer> => <digit>+
+
+<float> => <digit>+ "." <digit>+
+
+<boolean> => "true" | "false"
+
+<string> => "\"" <text> "\""
+
+<char> => "'" <character> "'"
+
+<identifier> => <letter> (<letter> | <digit> | "_")*
+
+<letter> => [a-zA-Z]
+
+<digit> => [0-9]
+
+<text> => <character>*
+
+<character> => <letter> | <digit> | <symbol>
+
+<symbol> => " " | "!" | "#" | "$"
+
+<newline> => "\n"
