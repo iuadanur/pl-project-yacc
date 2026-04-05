@@ -1,7 +1,7 @@
 # TZON
 
 ## Overview
-TZON is a simple educational programming language. It supports static types, functions, control flow, and basic I/O. The syntax is intentionally small and readable.
+TZON is a small educational language with dynamic typing. It supports functions, arrays, exceptions, control flow, and basic I/O.
 
 ## Group Members
 - İbrahim Utku ADANUR
@@ -10,38 +10,32 @@ TZON is a simple educational programming language. It supports static types, fun
 - Melih ATALAY
 
 ## Grammar in BNF Form
-The formal grammar is defined in BNF.txt. It describes:
+The formal grammar is in BNF.txt. It defines:
 - Program structure
 - Declarations and assignments
 - Expressions and operators
-- Control flow
-- Function definitions and calls
-- I/O statements
+- Control flow (if/elif/else, while, for)
+- Functions and calls
+- Arrays and indexing
+- Exception handling (try/catch/finally, throw)
 
 ## Syntax
 
-### Data Types
-- `int`: Integer values
-- `float`: Floating point numbers
-- `bool`: Boolean values (`true` or `false`)
-- `string`: Text enclosed in double quotes
-- `char`: Single character enclosed in single quotes
-
-### Variable Declaration and Assignment
+### Dynamic Typing
 ```tzon
-var int age = 23;
-var float pi = 3.14;
-var bool isActive = true;
-var string message = "hello";
-var char initial = 't';
+var age = 23;
+var pi = 3.14;
+var isActive = true;
+var message = "hello";
+var initial = 't';
 
 age = 24;
 ```
 
 ### Constants
 ```tzon
-const int MAX_SIZE = 100;
-const string NAME = "TZON";
+const MAX_SIZE = 100;
+const NAME = "TZON";
 ```
 
 ### Operators
@@ -71,19 +65,38 @@ while age < 18 {
 }
 ```
 
+#### For
+```tzon
+for (i = 0; i < 5; i = i + 1) {
+    print(i);
+}
+```
+
 ### Functions
 ```tzon
-fn add(int x, int y) : int {
+fn add(x, y) {
     return x + y;
 }
 
-var int result = add(5, 3);
+var result = add(5, 3);
 ```
 
-### Comments
+### Arrays
 ```tzon
-# this is a comment
-var string name = "john"; # inline comment
+var numbers = [1, 2, 3];
+var first = numbers[0];
+nums[1] = 99;
+```
+
+### Exceptions
+```tzon
+try {
+    throw "error";
+} catch (e) {
+    print("caught: " + e);
+} finally {
+    print("cleanup");
+}
 ```
 
 ### Input/Output
@@ -93,13 +106,13 @@ scan(fileName);
 ```
 
 ## Design Decisions
-1. **Simplicity**: A small, readable syntax for beginners.
-2. **Static Typing**: Explicit type annotations for clarity.
-3. **Block Scoping**: Braces for block structure.
-4. **Readable Logic**: `&&`, `||`, and `!` for boolean logic.
+1. **Dynamic typing** for a smaller language and simpler syntax.
+2. **Arrays** and **exceptions** add power and align with Step2 requirements.
+3. **For loop** adds extra control flow beyond the minimum.
+4. `scan` reads a full line from stdin as a string.
 
 ## Running TZON Programs
-1. Write your code in a file with the `.tzon` extension.
+1. Write your code in a `.tzon` file.
 2. Build and run:
 
 ```bash
@@ -109,3 +122,12 @@ make
 
 ## Example Program
 See `example.tzon` for a complete demonstration of the language.
+
+## Additional Examples
+You can also test features individually in `example-programs/`:
+- `arrays.tzon`
+- `exceptions.tzon`
+- `functions.tzon`
+- `loops.tzon`
+- `io.tzon`
+- `uncaught.tzon`
