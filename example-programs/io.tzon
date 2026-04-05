@@ -1,0 +1,16 @@
+# io.tzon
+var fileName = "";
+print("enter file name");
+scan(fileName);
+print("you entered: " + fileName);
+
+# edge cases
+var empty = "";
+print("enter empty line (just press enter):");
+scan(empty);
+print("empty length check: " + empty);
+
+var name = "";
+print("enter your name:");
+scan(name);
+print("hello " + name);
