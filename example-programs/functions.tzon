@@ -1,0 +1,36 @@
+# functions.tzon
+fn add(x, y) {
+    return x + y;
+}
+
+fn fib(n) {
+    if n < 2 {
+        return 1;
+    }
+    return fib(n - 1) + fib(n - 2);
+}
+
+fn max2(a, b) {
+    if a >= b {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+fn noReturn(x) {
+    # returns nothing explicitly
+    var y = x + 1;
+}
+
+var s = add(5, 7);
+print("sum: " + s);
+
+var f6 = fib(6);
+print("fib6: " + f6);
+
+var m = max2(10, 4);
+print("max: " + m);
+
+var nr = noReturn(5);
+print("noReturn: " + nr);
