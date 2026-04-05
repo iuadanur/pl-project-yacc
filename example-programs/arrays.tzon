@@ -1,0 +1,52 @@
+# arrays.tzon
+var nums = [1, 2, 3, 4, 5];
+print("nums: " + nums);
+
+var first = nums[0];
+print("first: " + first);
+
+try {
+    print(nums[-1]);
+} catch (e) {
+    print("Negative index caught: " + e);
+}
+
+nums[2] = 99;
+print("nums after update: " + nums);
+
+var empty = [];
+print("empty: " + empty);
+
+var matrix = [[1, 2], [3, 4]];
+print("matrix: " + matrix);
+print("matrix[1][0]: " + matrix[1][0]);
+
+# edge cases
+# out-of-bounds assignment should throw
+try {
+    nums[7] = 42;
+} catch (e) {
+    print("caught: " + e);
+}
+
+# nested array assignment
+matrix[0][1] = 99;
+print("matrix updated: " + matrix);
+
+# mixed type array
+var mixed = [1, "two", 3.14, true, 'x'];
+print("mixed: " + mixed);
+
+# simulated stack overflow via recursion (safe limit)
+fn deep(n) {
+    if n == 0 {
+        return 0;
+    }
+    return deep(n - 1);
+}
+
+try {
+    deep(1000);
+} catch (e) {
+    print("caught: " + e);
+}
