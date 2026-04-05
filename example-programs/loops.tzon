@@ -1,0 +1,31 @@
+# loops.tzon
+var i = 0;
+while i < 3 {
+    print("while i: " + i);
+    i = i + 1;
+}
+
+for (i = 0; i < 3; i = i + 1) {
+    print("for i: " + i);
+}
+
+# edge cases
+var j = 0;
+while j < 0 {
+    print("never prints");
+}
+print("while false condition ok");
+
+# negative start, bounded loop
+for (j = -2; j < 2; j = j + 1) {
+    print("for j: " + j);
+}
+
+# nested loop
+var r = 0;
+var c = 0;
+for (r = 0; r < 2; r = r + 1) {
+    for (c = 0; c < 2; c = c + 1) {
+        print("cell: " + r + "," + c);
+    }
+}
