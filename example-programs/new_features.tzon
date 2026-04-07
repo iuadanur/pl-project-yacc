@@ -34,8 +34,66 @@ print("len(a): " + len(a));
 var s = "abcdef";
 print("len(s): " + len(s));
 
+# for-each (array + string)
+for item in a {
+    print("for-each item: " + item);
+}
+for ch in "abc" {
+    print("for-each ch: " + ch);
+}
+
 # slicing
 print("a[1:]: " + a[1:]);
 print("a[:2]: " + a[:2]);
 print("a[::-1]: " + a[::-1]);
 print("s[1:5:2]: " + s[1:5:2]);
+
+# complex for-each scenarios
+
+# 1) nested for-each over matrix
+var matrix = [[1, 2, 3], [4, 5, 6]];
+for row in matrix {
+    var rowSum = 0;
+    for cell in row {
+        rowSum += cell;
+    }
+    print("row sum: " + rowSum);
+}
+
+# 2) break/continue in for-each
+var nums = [1, 2, 3, 4, 5, 6, 7];
+for n in nums {
+    if n % 2 == 0 {
+        continue;
+    }
+    if n > 5 {
+        break;
+    }
+    print("odd and <=5: " + n);
+}
+
+# 3) iterate over string and count vowels
+var text = "programming";
+var vowelCount = 0;
+for ch in text {
+    if ch == "a" {
+        vowelCount += 1;
+    } elif ch == "e" {
+        vowelCount += 1;
+    } elif ch == "i" {
+        vowelCount += 1;
+    } elif ch == "o" {
+        vowelCount += 1;
+    } elif ch == "u" {
+        vowelCount += 1;
+    }
+}
+print("vowel count: " + vowelCount);
+
+# 4) combining range + slicing + for-each
+var seq = range(0, 20, 2);
+var mid = seq[2:7];
+print("mid: " + mid);
+for x in mid {
+    print("mid item squared: " + (x * x));
+}

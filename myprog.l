@@ -34,6 +34,7 @@ NEWLINE     \n|\r|\r\n
 "else"          { return ELSE; }
 "while"         { return WHILE; }
 "for"           { return FOR; }
+"in"            { return IN; }
 "break"         { return BREAK; }
 "continue"      { return CONTINUE; }
 "return"        { return RETURN; }

@@ -79,6 +79,7 @@ typedef enum {
     NODE_IF,
     NODE_WHILE,
     NODE_FOR,
+    NODE_FOR_EACH,
     NODE_PRINT,
     NODE_SCAN,
     NODE_BLOCK,
@@ -141,6 +142,11 @@ typedef struct ASTNode {
             struct ASTNode* update;
             struct ASTNode* body;
         } for_loop;
+        struct {
+            char* var_name;
+            struct ASTNode* iterable;
+            struct ASTNode* body;
+        } for_each_loop;
         struct {
             struct ASTNode* expr;
         } print_stmt;
@@ -205,6 +211,7 @@ ASTNode* create_declaration_node(char* name, ASTNode* initial_value, int is_cons
 ASTNode* create_if_node(ASTNode* condition, ASTNode* if_branch, ElifNode* elifs, ASTNode* else_branch);
 ASTNode* create_while_node(ASTNode* condition, ASTNode* body);
 ASTNode* create_for_node(ASTNode* init, ASTNode* condition, ASTNode* update, ASTNode* body);
+ASTNode* create_for_each_node(char* var_name, ASTNode* iterable, ASTNode* body);
 ASTNode* create_print_node(ASTNode* expr);
 ASTNode* create_scan_node(char* name);
 ASTNode* create_block_node();
@@ -270,7 +277,7 @@ const int MAX_CALL_DEPTH = 200;
 
 %start program
 
-%token VAR CONST FN IF ELIF ELSE WHILE FOR BREAK CONTINUE RETURN PRINT SCAN TRY CATCH FINALLY THROW
+%token VAR CONST FN IF ELIF ELSE WHILE FOR IN BREAK CONTINUE RETURN PRINT SCAN TRY CATCH FINALLY THROW
 %token AND_OP OR_OP NOT_OP
 %token PLUS MINUS MULTIPLY DIVIDE MODULO
 %token INCREMENT DECREMENT PLUS_ASSIGN MINUS_ASSIGN MULT_ASSIGN DIV_ASSIGN MOD_ASSIGN
@@ -385,6 +392,8 @@ while_statement
 for_statement
     : FOR LPAREN assignment SEMICOLON expression SEMICOLON assignment RPAREN block
       { $$ = create_for_node($3, $5, $7, $9); }
+    | FOR IDENTIFIER IN expression block
+      { $$ = create_for_each_node($2, $4, $5); }
     ;
 
 print_statement
@@ -663,6 +672,15 @@ ASTNode* create_for_node(ASTNode* init, ASTNode* condition, ASTNode* update, AST
     return node;
 }
 
+ASTNode* create_for_each_node(char* var_name, ASTNode* iterable, ASTNode* body) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = NODE_FOR_EACH;
+    node->data.for_each_loop.var_name = var_name;
+    node->data.for_each_loop.iterable = iterable;
+    node->data.for_each_loop.body = body;
+    return node;
+}
+
 ASTNode* create_print_node(ASTNode* expr) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
     node->type = NODE_PRINT;
@@ -855,6 +873,7 @@ void set_variable(char* name, Value value) {
                 fprintf(stderr, "Error: cannot assign to const %s\n", name);
                 return;
             }
+            value.is_const = 0;
             t->symbols[idx].value = value;
             return;
         }
@@ -890,6 +909,7 @@ void pop_scope() {
 
 Value make_exception(const char* msg) {
     Value v;
+    v.is_const = 0;
     v.type = VAL_EXCEPTION;
     v.data.sval = strdup(msg);
     return v;
@@ -1382,6 +1402,51 @@ ReturnValue interpret(ASTNode* node) {
                 ReturnValue upd = interpret(node->data.for_loop.update);
                 if (upd.has_exception || upd.has_return || upd.has_break || upd.has_continue) return upd;
             }
+            return rv;
+        }
+        case NODE_FOR_EACH: {
+            Value iterable = evaluate_expression(node->data.for_each_loop.iterable);
+            if (iterable.type == VAL_EXCEPTION) { rv.has_exception = 1; rv.value = iterable; return rv; }
+
+            push_scope();
+            Value loop_init;
+            memset(&loop_init, 0, sizeof(Value));
+            loop_init.type = VAL_NULL;
+            loop_init.is_const = 0;
+            declare_variable(node->data.for_each_loop.var_name, loop_init, 0);
+
+            if (iterable.type == VAL_ARRAY) {
+                for (int i = 0; i < iterable.data.array.length; i++) {
+                    set_variable(node->data.for_each_loop.var_name, copy_value(iterable.data.array.elements[i]));
+                    ReturnValue inner = interpret(node->data.for_each_loop.body);
+                    if (inner.has_exception || inner.has_return) { pop_scope(); return inner; }
+                    if (inner.has_break) break;
+                    if (inner.has_continue) continue;
+                }
+            } else if (iterable.type == VAL_STRING) {
+                const char* s = iterable.data.sval ? iterable.data.sval : "";
+                for (int i = 0; s[i] != '\0'; i++) {
+                    char buf[2];
+                    buf[0] = s[i];
+                    buf[1] = '\0';
+                    Value ch;
+                    ch.type = VAL_STRING;
+                    ch.data.sval = strdup(buf);
+                    ch.is_const = 0;
+                    set_variable(node->data.for_each_loop.var_name, ch);
+                    ReturnValue inner = interpret(node->data.for_each_loop.body);
+                    if (inner.has_exception || inner.has_return) { pop_scope(); return inner; }
+                    if (inner.has_break) break;
+                    if (inner.has_continue) continue;
+                }
+            } else {
+                pop_scope();
+                rv.has_exception = 1;
+                rv.value = make_exception("for-each expects array or string");
+                return rv;
+            }
+
+            pop_scope();
             return rv;
         }
         case NODE_PRINT: {

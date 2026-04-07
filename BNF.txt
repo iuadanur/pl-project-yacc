@@ -47,6 +47,7 @@
 <while_statement> => "while" <expression> <block>
 
 <for_statement> => "for" "(" <assignment> ";" <expression> ";" <assignment> ")" <block>
+                 | "for" <identifier> "in" <expression> <block>
 
 <print_statement> => "print" "(" <expression> ")"
 
