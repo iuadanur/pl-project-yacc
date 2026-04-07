@@ -49,11 +49,50 @@ while age < 26 {
     age = age + 1;
 }
 
+# break / continue
+var k = 0;
+while k < 7 {
+    k++;
+    if k == 2 {
+        continue;
+    }
+    if k == 6 {
+        break;
+    }
+    print("k: " + k);
+}
+
 # for loop
 var i = 0;
 for (i = 0; i < 5; i = i + 1) {
     print(i);
 }
+
+# compound assignment / inc-dec
+var counter = 1;
+print("counter init (=1): " + counter);
+counter += 4;
+print("counter after +=4: " + counter);
+counter--;
+print("counter after --: " + counter);
+counter *= 2;
+print("counter after *=2: " + counter);
+counter /= 2;
+print("counter after /=2: " + counter);
+counter %= 3;
+print("counter after %=3: " + counter);
+
+# built-ins: range / len
+var evens = range(0, 10, 2);
+print("evens: " + evens);
+print("len(evens): " + len(evens));
+print("len(name): " + len(name));
+
+# slicing (array + string)
+print("evens[1:]: " + evens[1:]);
+print("evens[:3]: " + evens[:3]);
+print("evens[::-1]: " + evens[::-1]);
+print("name[0:4]: " + name[0:4]);
 
 # exceptions
 try {

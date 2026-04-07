@@ -46,6 +46,8 @@ struct Value {
 typedef struct {
     int has_return;
     int has_exception;
+    int has_break;
+    int has_continue;
     Value value;
 } ReturnValue;
 
@@ -83,10 +85,13 @@ typedef enum {
     NODE_FUNCTION_DEF,
     NODE_FUNCTION_CALL,
     NODE_RETURN,
+    NODE_BREAK,
+    NODE_CONTINUE,
     NODE_TRY_CATCH,
     NODE_THROW,
     NODE_ARRAY_LITERAL,
-    NODE_ARRAY_ACCESS
+    NODE_ARRAY_ACCESS,
+    NODE_SLICE
 } NodeType;
 
 typedef struct ElifNode {
@@ -179,6 +184,12 @@ typedef struct ASTNode {
             struct ASTNode* array;
             struct ASTNode* index;
         } array_access;
+        struct {
+            struct ASTNode* value;
+            struct ASTNode* start;
+            struct ASTNode* end;
+            struct ASTNode* step;
+        } slice;
     } data;
 } ASTNode;
 
@@ -200,10 +211,13 @@ ASTNode* create_block_node();
 ASTNode* create_function_def_node(char* name, char** parameters, int param_count, ASTNode* body);
 ASTNode* create_function_call_node(char* name);
 ASTNode* create_return_node(ASTNode* expr);
+ASTNode* create_break_node();
+ASTNode* create_continue_node();
 ASTNode* create_try_catch_node(ASTNode* try_block, ASTNode* catch_block, char* exception_var, ASTNode* finally_block);
 ASTNode* create_throw_node(ASTNode* expr);
 ASTNode* create_array_literal_node();
 ASTNode* create_array_access_node(ASTNode* array, ASTNode* index);
+ASTNode* create_slice_node(ASTNode* value, ASTNode* start, ASTNode* end, ASTNode* step);
 
 void add_statement_to_block(ASTNode* block, ASTNode* statement);
 void add_parameter_to_function(ASTNode* func_def, char* param);
@@ -256,9 +270,10 @@ const int MAX_CALL_DEPTH = 200;
 
 %start program
 
-%token VAR CONST FN IF ELIF ELSE WHILE FOR RETURN PRINT SCAN TRY CATCH FINALLY THROW
+%token VAR CONST FN IF ELIF ELSE WHILE FOR BREAK CONTINUE RETURN PRINT SCAN TRY CATCH FINALLY THROW
 %token AND_OP OR_OP NOT_OP
 %token PLUS MINUS MULTIPLY DIVIDE MODULO
+%token INCREMENT DECREMENT PLUS_ASSIGN MINUS_ASSIGN MULT_ASSIGN DIV_ASSIGN MOD_ASSIGN
 %token ASSIGN EQUAL NOT_EQUAL LESS_THAN LESS_EQUAL GREATER_THAN GREATER_EQUAL
 %token LPAREN RPAREN LBRACE RBRACE LBRACKET RBRACKET SEMICOLON COMMA COLON
 
@@ -272,7 +287,7 @@ const int MAX_CALL_DEPTH = 200;
 %type <node> program statement_list statement block
 %type <node> declaration assignment expression or_expr and_expr not_expr comparison arithmetic term factor
 %type <node> if_statement while_statement for_statement print_statement scan_statement
-%type <node> function_definition function_call return_statement try_statement throw_statement
+%type <node> function_definition function_call return_statement break_statement continue_statement try_statement throw_statement
 %type <node> array_literal primary postfix
 %type <str_list> param_list
 %type <node_list> arg_list array_elements
@@ -307,6 +322,8 @@ statement
     | function_definition { $$ = $1; }
     | function_call SEMICOLON { $$ = $1; }
     | return_statement SEMICOLON { $$ = $1; }
+    | break_statement SEMICOLON { $$ = $1; }
+    | continue_statement SEMICOLON { $$ = $1; }
     | print_statement SEMICOLON { $$ = $1; }
     | scan_statement SEMICOLON { $$ = $1; }
     | try_statement { $$ = $1; }
@@ -325,6 +342,13 @@ declaration
 
 assignment
     : postfix ASSIGN expression { $$ = create_assignment_node($1, $3); }
+    | postfix PLUS_ASSIGN expression { $$ = create_assignment_node($1, create_binary_op_node($1, PLUS, $3)); }
+    | postfix MINUS_ASSIGN expression { $$ = create_assignment_node($1, create_binary_op_node($1, MINUS, $3)); }
+    | postfix MULT_ASSIGN expression { $$ = create_assignment_node($1, create_binary_op_node($1, MULTIPLY, $3)); }
+    | postfix DIV_ASSIGN expression { $$ = create_assignment_node($1, create_binary_op_node($1, DIVIDE, $3)); }
+    | postfix MOD_ASSIGN expression { $$ = create_assignment_node($1, create_binary_op_node($1, MODULO, $3)); }
+    | postfix INCREMENT { $$ = create_assignment_node($1, create_binary_op_node($1, PLUS, create_integer_node(1))); }
+    | postfix DECREMENT { $$ = create_assignment_node($1, create_binary_op_node($1, MINUS, create_integer_node(1))); }
     ;
 
 if_statement
@@ -423,6 +447,14 @@ return_statement
     : RETURN expression { $$ = create_return_node($2); }
     ;
 
+break_statement
+    : BREAK { $$ = create_break_node(); }
+    ;
+
+continue_statement
+    : CONTINUE { $$ = create_continue_node(); }
+    ;
+
 try_statement
     : TRY block CATCH LPAREN IDENTIFIER RPAREN block FINALLY block
       { $$ = create_try_catch_node($2, $7, $5, $9); }
@@ -496,6 +528,14 @@ primary
 postfix
     : primary { $$ = $1; }
     | postfix LBRACKET expression RBRACKET { $$ = create_array_access_node($1, $3); }
+    | postfix LBRACKET COLON RBRACKET { $$ = create_slice_node($1, NULL, NULL, NULL); }
+    | postfix LBRACKET expression COLON RBRACKET { $$ = create_slice_node($1, $3, NULL, NULL); }
+    | postfix LBRACKET COLON expression RBRACKET { $$ = create_slice_node($1, NULL, $4, NULL); }
+    | postfix LBRACKET expression COLON expression RBRACKET { $$ = create_slice_node($1, $3, $5, NULL); }
+    | postfix LBRACKET COLON COLON expression RBRACKET { $$ = create_slice_node($1, NULL, NULL, $5); }
+    | postfix LBRACKET expression COLON COLON expression RBRACKET { $$ = create_slice_node($1, $3, NULL, $6); }
+    | postfix LBRACKET COLON expression COLON expression RBRACKET { $$ = create_slice_node($1, NULL, $4, $6); }
+    | postfix LBRACKET expression COLON expression COLON expression RBRACKET { $$ = create_slice_node($1, $3, $5, $7); }
     ;
 
 array_literal
@@ -672,6 +712,18 @@ ASTNode* create_return_node(ASTNode* expr) {
     return node;
 }
 
+ASTNode* create_break_node() {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = NODE_BREAK;
+    return node;
+}
+
+ASTNode* create_continue_node() {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = NODE_CONTINUE;
+    return node;
+}
+
 ASTNode* create_try_catch_node(ASTNode* try_block, ASTNode* catch_block, char* exception_var, ASTNode* finally_block) {
     ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
     node->type = NODE_TRY_CATCH;
@@ -703,6 +755,16 @@ ASTNode* create_array_access_node(ASTNode* array, ASTNode* index) {
     node->type = NODE_ARRAY_ACCESS;
     node->data.array_access.array = array;
     node->data.array_access.index = index;
+    return node;
+}
+
+ASTNode* create_slice_node(ASTNode* value, ASTNode* start, ASTNode* end, ASTNode* step) {
+    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
+    node->type = NODE_SLICE;
+    node->data.slice.value = value;
+    node->data.slice.start = start;
+    node->data.slice.end = end;
+    node->data.slice.step = step;
     return node;
 }
 
@@ -970,6 +1032,101 @@ Value evaluate_expression(ASTNode* expr) {
             }
             return copy_value(arr.data.array.elements[idx.data.ival]);
         }
+        case NODE_SLICE: {
+            Value src = evaluate_expression(expr->data.slice.value);
+            if (src.type == VAL_EXCEPTION) return src;
+            if (src.type != VAL_ARRAY && src.type != VAL_STRING) {
+                return make_exception("slice target must be array or string");
+            }
+
+            int length = (src.type == VAL_ARRAY) ? src.data.array.length : (int)strlen(src.data.sval ? src.data.sval : "");
+            int step = 1;
+            int start_default = expr->data.slice.start == NULL;
+            int end_default = expr->data.slice.end == NULL;
+            int start = 0;
+            int end = length;
+
+            if (expr->data.slice.step) {
+                Value sv = evaluate_expression(expr->data.slice.step);
+                if (sv.type == VAL_EXCEPTION) return sv;
+                if (sv.type != VAL_INTEGER) return make_exception("slice step must be integer");
+                step = sv.data.ival;
+                if (step == 0) return make_exception("slice step cannot be zero");
+            }
+
+            if (step < 0) {
+                start = length - 1;
+                end = -1;
+            }
+
+            if (expr->data.slice.start) {
+                Value st = evaluate_expression(expr->data.slice.start);
+                if (st.type == VAL_EXCEPTION) return st;
+                if (st.type != VAL_INTEGER) return make_exception("slice start must be integer");
+                start = st.data.ival;
+            }
+
+            if (expr->data.slice.end) {
+                Value ev = evaluate_expression(expr->data.slice.end);
+                if (ev.type == VAL_EXCEPTION) return ev;
+                if (ev.type != VAL_INTEGER) return make_exception("slice end must be integer");
+                end = ev.data.ival;
+            }
+
+            if (!start_default && start < 0) start += length;
+            if (!end_default && end < 0) end += length;
+
+            if (step > 0) {
+                if (start < 0) start = 0;
+                if (start > length) start = length;
+                if (end < 0) end = 0;
+                if (end > length) end = length;
+            } else {
+                if (start < -1) start = -1;
+                if (start >= length) start = length - 1;
+                if (end < -1) end = -1;
+                if (end >= length) end = length - 1;
+            }
+
+            if (src.type == VAL_STRING) {
+                const char* s = src.data.sval ? src.data.sval : "";
+                int capacity = length + 1;
+                char* out = (char*)malloc(capacity);
+                int w = 0;
+                if (step > 0) {
+                    for (int i = start; i < end; i += step) out[w++] = s[i];
+                } else {
+                    for (int i = start; i > end; i += step) out[w++] = s[i];
+                }
+                out[w] = '\0';
+                v.type = VAL_STRING;
+                v.data.sval = out;
+                return v;
+            }
+
+            v.type = VAL_ARRAY;
+            v.data.array.length = 0;
+            v.data.array.capacity = 8;
+            v.data.array.elements = (Value*)malloc(sizeof(Value) * v.data.array.capacity);
+            if (step > 0) {
+                for (int i = start; i < end; i += step) {
+                    if (v.data.array.length >= v.data.array.capacity) {
+                        v.data.array.capacity *= 2;
+                        v.data.array.elements = (Value*)realloc(v.data.array.elements, sizeof(Value) * v.data.array.capacity);
+                    }
+                    v.data.array.elements[v.data.array.length++] = copy_value(src.data.array.elements[i]);
+                }
+            } else {
+                for (int i = start; i > end; i += step) {
+                    if (v.data.array.length >= v.data.array.capacity) {
+                        v.data.array.capacity *= 2;
+                        v.data.array.elements = (Value*)realloc(v.data.array.elements, sizeof(Value) * v.data.array.capacity);
+                    }
+                    v.data.array.elements[v.data.array.length++] = copy_value(src.data.array.elements[i]);
+                }
+            }
+            return v;
+        }
         case NODE_UNARY_OP: {
             Value rhs = evaluate_expression(expr->data.unary_op.operand);
             if (rhs.type == VAL_EXCEPTION) return rhs;
@@ -1068,6 +1225,57 @@ Value evaluate_expression(ASTNode* expr) {
             return make_exception("invalid binary op");
         }
         case NODE_FUNCTION_CALL: {
+            if (strcmp(expr->data.func_call.name, "len") == 0) {
+                if (expr->data.func_call.arg_count != 1) return make_exception("len expects 1 argument");
+                Value arg = evaluate_expression(expr->data.func_call.arguments[0]);
+                if (arg.type == VAL_EXCEPTION) return arg;
+                if (arg.type != VAL_ARRAY && arg.type != VAL_STRING) return make_exception("len expects array or string");
+                v.type = VAL_INTEGER;
+                v.data.ival = (arg.type == VAL_ARRAY) ? arg.data.array.length : (int)strlen(arg.data.sval ? arg.data.sval : "");
+                return v;
+            }
+            if (strcmp(expr->data.func_call.name, "range") == 0) {
+                if (expr->data.func_call.arg_count != 2 && expr->data.func_call.arg_count != 3) {
+                    return make_exception("range expects 2 or 3 arguments");
+                }
+                Value s = evaluate_expression(expr->data.func_call.arguments[0]);
+                Value e = evaluate_expression(expr->data.func_call.arguments[1]);
+                if (s.type == VAL_EXCEPTION) return s;
+                if (e.type == VAL_EXCEPTION) return e;
+                if (s.type != VAL_INTEGER || e.type != VAL_INTEGER) return make_exception("range arguments must be integer");
+                int step = 1;
+                if (expr->data.func_call.arg_count == 3) {
+                    Value st = evaluate_expression(expr->data.func_call.arguments[2]);
+                    if (st.type == VAL_EXCEPTION) return st;
+                    if (st.type != VAL_INTEGER) return make_exception("range step must be integer");
+                    step = st.data.ival;
+                }
+                if (step == 0) return make_exception("range step cannot be zero");
+                v.type = VAL_ARRAY;
+                v.data.array.length = 0;
+                v.data.array.capacity = 8;
+                v.data.array.elements = (Value*)malloc(sizeof(Value) * v.data.array.capacity);
+                if (step > 0) {
+                    for (int i = s.data.ival; i < e.data.ival; i += step) {
+                        if (v.data.array.length >= v.data.array.capacity) {
+                            v.data.array.capacity *= 2;
+                            v.data.array.elements = (Value*)realloc(v.data.array.elements, sizeof(Value) * v.data.array.capacity);
+                        }
+                        Value iv; iv.type = VAL_INTEGER; iv.data.ival = i;
+                        v.data.array.elements[v.data.array.length++] = iv;
+                    }
+                } else {
+                    for (int i = s.data.ival; i > e.data.ival; i += step) {
+                        if (v.data.array.length >= v.data.array.capacity) {
+                            v.data.array.capacity *= 2;
+                            v.data.array.elements = (Value*)realloc(v.data.array.elements, sizeof(Value) * v.data.array.capacity);
+                        }
+                        Value iv; iv.type = VAL_INTEGER; iv.data.ival = i;
+                        v.data.array.elements[v.data.array.length++] = iv;
+                    }
+                }
+                return v;
+            }
             Value fn = get_variable(expr->data.func_call.name);
             if (fn.type != VAL_FUNCTION) {
                 return make_exception("not a function");
@@ -1075,6 +1283,7 @@ Value evaluate_expression(ASTNode* expr) {
             ReturnValue r = call_function(fn.data.func.func_def, expr->data.func_call.arguments, expr->data.func_call.arg_count);
             if (r.has_exception) return r.value;
             if (r.has_return) return r.value;
+            if (r.has_break || r.has_continue) return make_exception("break/continue outside loop");
             v.type = VAL_NULL;
             return v;
         }
@@ -1084,7 +1293,7 @@ Value evaluate_expression(ASTNode* expr) {
 }
 
 ReturnValue interpret(ASTNode* node) {
-    ReturnValue rv; rv.has_return = 0; rv.has_exception = 0;
+    ReturnValue rv; rv.has_return = 0; rv.has_exception = 0; rv.has_break = 0; rv.has_continue = 0;
     Value v; memset(&v, 0, sizeof(Value));
 
     switch (node->type) {
@@ -1148,20 +1357,30 @@ ReturnValue interpret(ASTNode* node) {
                 if (!value_to_boolean(cond)) break;
                 ReturnValue inner = interpret(node->data.while_loop.body);
                 if (inner.has_exception || inner.has_return) return inner;
+                if (inner.has_break) break;
+                if (inner.has_continue) continue;
             }
             return rv;
         }
         case NODE_FOR: {
             ReturnValue init = interpret(node->data.for_loop.init);
-            if (init.has_exception || init.has_return) return init;
+            if (init.has_exception || init.has_return || init.has_break || init.has_continue) return init;
             while (1) {
                 Value cond = evaluate_expression(node->data.for_loop.condition);
                 if (cond.type == VAL_EXCEPTION) { rv.has_exception = 1; rv.value = cond; return rv; }
                 if (!value_to_boolean(cond)) break;
                 ReturnValue inner = interpret(node->data.for_loop.body);
                 if (inner.has_exception || inner.has_return) return inner;
+                if (inner.has_break) break;
+                if (inner.has_continue) {
+                    ReturnValue upd_on_continue = interpret(node->data.for_loop.update);
+                    if (upd_on_continue.has_exception || upd_on_continue.has_return || upd_on_continue.has_break || upd_on_continue.has_continue) {
+                        return upd_on_continue;
+                    }
+                    continue;
+                }
                 ReturnValue upd = interpret(node->data.for_loop.update);
-                if (upd.has_exception || upd.has_return) return upd;
+                if (upd.has_exception || upd.has_return || upd.has_break || upd.has_continue) return upd;
             }
             return rv;
         }
@@ -1186,18 +1405,24 @@ ReturnValue interpret(ASTNode* node) {
             return rv;
         }
         case NODE_FUNCTION_CALL: {
-            Value fn = get_variable(node->data.func_call.name);
-            if (fn.type != VAL_FUNCTION) {
-                rv.has_exception = 1; rv.value = make_exception("not a function"); return rv;
+            Value eval = evaluate_expression(node);
+            if (eval.type == VAL_EXCEPTION) {
+                rv.has_exception = 1; rv.value = eval; return rv;
             }
-            ReturnValue r = call_function(fn.data.func.func_def, node->data.func_call.arguments, node->data.func_call.arg_count);
-            if (r.has_return) r.has_return = 0;
-            return r;
+            return rv;
         }
         case NODE_RETURN: {
             rv.has_return = 1;
             rv.value = evaluate_expression(node->data.return_stmt.expr);
             if (rv.value.type == VAL_EXCEPTION) { rv.has_exception = 1; rv.has_return = 0; }
+            return rv;
+        }
+        case NODE_BREAK: {
+            rv.has_break = 1;
+            return rv;
+        }
+        case NODE_CONTINUE: {
+            rv.has_continue = 1;
             return rv;
         }
         case NODE_TRY_CATCH: {
@@ -1211,7 +1436,7 @@ ReturnValue interpret(ASTNode* node) {
             }
             if (node->data.try_catch.finally_block) {
                 ReturnValue fr = interpret(node->data.try_catch.finally_block);
-                if (fr.has_exception || fr.has_return) return fr;
+                if (fr.has_exception || fr.has_return || fr.has_break || fr.has_continue) return fr;
             }
             return tr;
         }
@@ -1226,11 +1451,11 @@ ReturnValue interpret(ASTNode* node) {
 }
 
 ReturnValue interpret_block(ASTNode* block, int new_scope) {
-    ReturnValue rv; rv.has_return = 0; rv.has_exception = 0;
+    ReturnValue rv; rv.has_return = 0; rv.has_exception = 0; rv.has_break = 0; rv.has_continue = 0;
     if (new_scope) push_scope();
     for (int i = 0; i < block->data.block.count; i++) {
         ReturnValue r = interpret(block->data.block.statements[i]);
-        if (r.has_exception || r.has_return) {
+        if (r.has_exception || r.has_return || r.has_break || r.has_continue) {
             if (new_scope) pop_scope();
             return r;
         }
@@ -1240,7 +1465,7 @@ ReturnValue interpret_block(ASTNode* block, int new_scope) {
 }
 
 ReturnValue call_function(ASTNode* func_def, ASTNode** arguments, int arg_count) {
-    ReturnValue rv; rv.has_return = 0; rv.has_exception = 0;
+    ReturnValue rv; rv.has_return = 0; rv.has_exception = 0; rv.has_break = 0; rv.has_continue = 0;
     call_depth++;
     if (call_depth > MAX_CALL_DEPTH) {
         call_depth--;
@@ -1259,6 +1484,12 @@ ReturnValue call_function(ASTNode* func_def, ASTNode** arguments, int arg_count)
     ReturnValue r = interpret(func_def->data.func_def.body);
     pop_scope();
     call_depth--;
+    if (r.has_break || r.has_continue) {
+        r.has_break = 0;
+        r.has_continue = 0;
+        r.has_exception = 1;
+        r.value = make_exception("break/continue outside loop");
+    }
     return r;
 }
 
@@ -1311,7 +1542,13 @@ int main(int argc, char** argv) {
 
     if (program_root) {
         ReturnValue r = interpret(program_root);
-        if (r.has_exception) {
+        if (r.has_break || r.has_continue) {
+            Value e = make_exception("break/continue outside loop");
+            fflush(stdout);
+            char* s = value_to_string(e);
+            printf("Unhandled exception: %s\n", s);
+            free(s);
+        } else if (r.has_exception) {
             fflush(stdout);
             char* s = value_to_string(r.value);
             printf("Unhandled exception: %s\n", s);

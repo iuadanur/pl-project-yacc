@@ -10,6 +10,8 @@
               | <function_definition>
               | <function_call> ";"
               | <return_statement> ";"
+              | "break" ";"
+              | "continue" ";"
               | <print_statement> ";"
               | <scan_statement> ";"
               | <try_statement>
@@ -23,8 +25,15 @@
 
 <assignment> => <identifier> "=" <expression>
               | <array_access> "=" <expression>
+              | <postfix> "+=" <expression>
+              | <postfix> "-=" <expression>
+              | <postfix> "*=" <expression>
+              | <postfix> "/=" <expression>
+              | <postfix> "%=" <expression>
+              | <postfix> "++"
+              | <postfix> "--"
 
-<array_access> => <factor> "[" <expression> "]"
+<array_access> => <postfix> "[" <expression> "]"
 
 <if_statement> => "if" <expression> <block>
                 | "if" <expression> <block> <elif_list>
@@ -101,6 +110,19 @@
           | <function_call>
           | <array_literal>
           | <array_access>
+          | <slice_expression>
+
+<postfix> => <factor>
+           | <postfix> "[" <expression> "]"
+
+<slice_expression> => <postfix> "[" ":" "]"
+                    | <postfix> "[" <expression> ":" "]"
+                    | <postfix> "[" ":" <expression> "]"
+                    | <postfix> "[" <expression> ":" <expression> "]"
+                    | <postfix> "[" ":" ":" <expression> "]"
+                    | <postfix> "[" <expression> ":" ":" <expression> "]"
+                    | <postfix> "[" ":" <expression> ":" <expression> "]"
+                    | <postfix> "[" <expression> ":" <expression> ":" <expression> "]"
 
 <array_literal> => "[" "]"
                  | "[" <array_element_list> "]"

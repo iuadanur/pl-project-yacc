@@ -43,6 +43,8 @@ const NAME = "TZON";
 - Comparison: `==`, `!=`, `<`, `<=`, `>`, `>=`
 - Logical: `&&`, `||`, `!`
 - Assignment: `=`
+- Compound Assignment: `+=`, `-=`, `*=`, `/=`, `%=`
+- Increment/Decrement: `++`, `--`
 
 ### Control Structures
 
@@ -72,6 +74,16 @@ for (i = 0; i < 5; i = i + 1) {
 }
 ```
 
+#### Break / Continue
+```tzon
+while x < 10 {
+    x++;
+    if x == 3 { continue; }
+    if x == 8 { break; }
+    print(x);
+}
+```
+
 ### Functions
 ```tzon
 fn add(x, y) {
@@ -86,6 +98,7 @@ var result = add(5, 3);
 var numbers = [1, 2, 3];
 var first = numbers[0];
 nums[1] = 99;
+var part = numbers[0:2];
 ```
 
 ### Exceptions
@@ -103,6 +116,13 @@ try {
 ```tzon
 print("hello world");
 scan(fileName);
+```
+
+### Built-ins
+```tzon
+var seq = range(0, 10, 2);
+print(len(seq));
+print("abcdef"[1:5:2]);
 ```
 
 ## Design Decisions
@@ -131,3 +151,4 @@ You can also test features individually in `example-programs/`:
 - `loops.tzon`
 - `io.tzon`
 - `uncaught.tzon`
+- `new_features.tzon`

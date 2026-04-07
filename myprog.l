@@ -34,6 +34,8 @@ NEWLINE     \n|\r|\r\n
 "else"          { return ELSE; }
 "while"         { return WHILE; }
 "for"           { return FOR; }
+"break"         { return BREAK; }
+"continue"      { return CONTINUE; }
 "return"        { return RETURN; }
 "print"         { return PRINT; }
 "scan"          { return SCAN; }
@@ -44,6 +46,14 @@ NEWLINE     \n|\r|\r\n
 
 "true"          { yylval.bval = 1; return BOOLEAN; }
 "false"         { yylval.bval = 0; return BOOLEAN; }
+
+"++"            { return INCREMENT; }
+"--"            { return DECREMENT; }
+"+="            { return PLUS_ASSIGN; }
+"-="            { return MINUS_ASSIGN; }
+"*="            { return MULT_ASSIGN; }
+"/="            { return DIV_ASSIGN; }
+"%="            { return MOD_ASSIGN; }
 
 "&&"            { return AND_OP; }
 "||"            { return OR_OP; }

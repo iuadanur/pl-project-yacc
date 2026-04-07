@@ -1,0 +1,41 @@
+# increment/decrement and compound assignment
+var x = 1;
+print("x init (=1): " + x);
+x++;
+print("x after ++: " + x);
+x += 4;
+print("x after +=4: " + x);
+x--;
+print("x after --: " + x);
+x *= 2;
+print("x after *=2: " + x);
+x /= 2;
+print("x after /=2: " + x);
+x %= 3;
+print("x after %=3: " + x);
+
+# break/continue
+var i = 0;
+while i < 6 {
+    i++;
+    if i == 2 {
+        continue;
+    }
+    if i == 5 {
+        break;
+    }
+    print("loop i: " + i);
+}
+
+# len/range
+var a = range(0, 6, 2);
+print("a: " + a);
+print("len(a): " + len(a));
+var s = "abcdef";
+print("len(s): " + len(s));
+
+# slicing
+print("a[1:]: " + a[1:]);
+print("a[:2]: " + a[:2]);
+print("a[::-1]: " + a[::-1]);
+print("s[1:5:2]: " + s[1:5:2]);
